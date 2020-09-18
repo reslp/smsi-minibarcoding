@@ -1,0 +1,10 @@
+log.*
+.cache/
+.snakemake/
+_direction
+figure/
+data/Primer_combination_MinION_Teil1.csv
+doc/
+data/fastq_pass
+tmp/
+!tmp/.gitkeep

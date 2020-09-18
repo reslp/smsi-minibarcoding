@@ -1,0 +1,81 @@
+---
+title: "Barcoding Report"
+author: "smsi-minibarcoder"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  pdf_document:
+    toc: TRUE
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+#setwd("/home/reslp/Dropbox/Philipp/minion_barcoding")
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+count_data <- "barcode_summary.txt"
+data <- read.csv(count_data, sep=",", header=F)
+colnames(data) <- c("barcode", "length", "numseqs")
+
+```
+
+## Total number of sequences per recovered consensus barcodes
+
+
+```{r,fig.height=16, echo=F}
+ggplot(data, aes(x=numseqs, y=barcode)) +geom_bar(stat="identity")
+```
+
+## Lengths of recovered consensus barcodes
+
+```{r,fig.height=16, echo=F}
+ggplot(data, aes(x=length, y=barcode)) +geom_bar(stat="identity")
+```
+
+
+## Recovering efficiency of pipeline
+
+```{r,fig.height=5, echo=F}
+options(scipen = 999)   
+totalseq <- 2791719
+missing <- totalseq - sum(data$numseqs)
+
+
+#propdf <- as.data.frame(do.callrbind(c("recovered", sum(data$numseqs)),c("missing", missing)))
+#propdf <- as.data.frame(do.call(rbind, listi))
+
+propdf <- data.frame(category=character(), numseqs=numeric(), stringsAsFactors=FALSE) 
+propdf[1,] <- c("recovered", sum(data$numseqs))
+propdf[2,] <-  c("missing", missing)
+#colnames(propdf) <- c("category", "numseqs")
+
+#print(as.numeric(propdf$numseqs[1])/2791719*100)
+#propdf$numseqs <- as.numeric(propdf$numseqs)
+propdf$propotion_of_reads <- ((as.double(propdf$numseqs) / totalseq)*100)
+
+print(propdf)
+
+
+ggplot(propdf, aes(x=category, y=propotion_of_reads)) +geom_bar(stat="identity")
+
+#ggplot(propdf, aes(x=category, y=numseqs)) +geom_bar(stat="identity")
+
+```
+
+
+
+```{r, echo=F ,fig.height=5}
+#ggplot(propdf, aes(x=category, y=numseqs)) +geom_bar(stat="identity")
+```
+
+## Misssing barcodes
+
+The following barcodes have not been recovered: 
+```{r, echo=F}
+
+all_barcodes_file <- "demfile.txt"
+dem_data <- read.csv(all_barcodes_file, sep=",", header=F)
+all_barcodes <- dem_data$V1
+print(data$barcode[ !data$barcode %in% all_barcodes])
+```
+
+
+

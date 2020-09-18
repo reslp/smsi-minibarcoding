@@ -59,7 +59,7 @@ This command should create a filde called report.pdf which gives a summary of th
 
 
 
-##Automation:
+## Automation:
 
 I also created a snakemake pipeline to automate all the necessary steps. For it to work the folder with FASTQ files from Minion (fastq_pass) should be placed in data.
 

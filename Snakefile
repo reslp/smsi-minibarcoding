@@ -1,11 +1,48 @@
-RF, = glob_wildcards("data/fastq_pass/{readfile}.fastq.gz")
+RF, = glob_wildcards("data/fast5_pass/{readfile}.fast5")
 
 rule all:
 	input:
-		#"checkpoints/fastqtofasta.done",
+		"results/fastq_files/flappie.done"
 		#"results/demfile.txt",
-		"results/reference_free_barcoding.done",
-		"results/report.pdf"
+		#"results/reference_free_barcoding.done",
+		#"results/report.pdf"
+		
+
+rule flappie:
+	input:
+		dir = "data/fast5_pass"
+	output:
+		checkpoint = "results/fastq_files/flappie.done"
+	log:
+		stdout = "log/flappie.out",
+		stderr = "log/flappie.err"
+	params:
+		wd = os.getcwd(),
+		model = "r941_native"
+	singularity: "docker://reslp/flappie:4de542f"
+	threads: 10
+	shell:
+		"""
+			cd results/fastq_files/
+			export OPENBLAS_NUM_THREADS={threads}
+			for file in $(ls {params.wd}/{input.dir}); do
+				filename=$(echo $(basename $file) | awk -F'.' '{{print $1}}')	
+				if [ ! -f $filename.fastq.gz ]; then
+					echo -e "\\n$(date) - Processing file $filename"			
+					echo -e "$(date) - converting fast5"
+					if [ -d $filename ]; then rm -rf $filename/*; else mkdir $filename; fi
+                                	multi_to_single_fast5 -i {params.wd}/{input.dir}/$file -t {threads} -s $filename/
+					echo -e "$(date) - basecalling"
+					flappie --model={params.model} $filename/0 | gzip > $filename.fastq.gz.tmp
+					mv $filename.fastq.gz.tmp $filename.flappie.fastq.gz
+					rm -rf $filename
+				fi
+				echo -e "$(date) - Done"
+			done 1> {params.wd}/{log.stdout} 2> {params.wd}/{log.stderr}
+			touch {params.wd}/{output.checkpoint}
+	"""
+
+			
 
 rule create_demfile:
 	input:

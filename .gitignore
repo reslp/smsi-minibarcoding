@@ -8,3 +8,5 @@ doc/
 data/fastq_pass
 tmp/
 !tmp/.gitkeep
+log/
+!log/.gitkeep

@@ -1,0 +1,118 @@
+import glob
+import itertools
+import math
+
+RF, = glob_wildcards("data/Jacky_171220/{readfile}.fastq.gz")
+DEMFILE = "data/2_MinION_Lauf_17122020_Probennamen_und_Primersequenzen.csv" 
+#batchsize = 13
+#
+#files = glob.glob("data/fast5_pass/*.fast5")
+#nbatches = math.ceil(len(files) / batchsize)
+#
+##print(len(files))
+#
+#units = {}
+#
+#i = 1
+#cumlen = 0
+#while len(files) > batchsize:
+#	units[str(i)] = files[:batchsize]
+#	del files[:batchsize]
+#	cumlen += len(units[str(i)])
+#	batches = batches.append(str(i)])
+#	i += 1
+#batches = batches.append(str(i+1)])
+#units[str(i+1)] = files 
+#cumlen += len(units[str(i+1)])
+#print(cumlen)
+
+
+
+rule all:
+	input:
+		#"results/fasta_combined.fasta",
+		"results/demfile.txt",
+		expand("results/rfb_{f}/reference_free_barcoding.done", f=RF),
+		expand("results/rfb_{f}/report.pdf", f=RF)
+		
+rule create_demfile:
+	input:
+		"data/2_MinION_Lauf_17122020_Probennamen_und_Primersequenzen.csv"
+	output:
+		"results/demfile.txt"
+	shell:
+		"""
+		tail -n +2 {input} | awk -F ";" '{{printf $1","; printf substr($3,1,13)",";  printf substr($5,1,13)","; printf substr($3,14,38)","; printf substr($5,14,38)"\\n";}}' > {output}
+		"""
+
+rule fastqtofasta:
+	input:
+		"data/Jacky_171220/{readfile}.fastq.gz"
+	output:
+		fasta_file = "results/fasta_pass/{readfile}.fa"
+	shell:
+		"""
+		zcat {input} | paste - - - - | cut -f 1,2 | sed 's/^@/>/' | sed 's/\\t/\\n/'> {output}
+		"""
+
+rule combine_fasta:
+	input:
+		expand("results/fasta_pass/{rf}.fa", rf=RF) 
+	output: 
+		"results/fasta_combined.fasta"
+	shell:
+		"""
+		cat {input} > {output}
+		"""
+
+rule reference_free_barcoding:
+	input:
+		fasta = "results/fasta_pass/{readfile}.fa",
+		demfile = rules.create_demfile.output
+	output:
+		"results/rfb_{readfile}/reference_free_barcoding.done"
+	params:
+		rf = "{readfile}",
+		len = 600,
+		depth = 10000
+	singularity:
+		"docker://reslp/minibarcoder:5e1dc3b"
+	shell:
+		"""
+		python /software/miniBarcoder/miniBarcoder.py -f {input.fasta} -d {input.demfile} -o results/rfb_{params.rf}/rfb -D {params.depth} -t 8 -l {params.len} &> results/rfb_{params.rf}/log.txt
+		touch {output}
+		"""
+
+rule get_summary_for_plotting:
+	input:
+		checkpoint = "results/rfb_{readfile}/reference_free_barcoding.done",
+		fasta = "results/fasta_pass/{readfile}.fa"
+	output:
+		summary = "results/rfb_{readfile}/barcode_summary.txt",
+		total_seqs = "results/rfb_{readfile}/total_seqs.txt"
+	params:
+		rf="{readfile}"
+	shell:
+		"""
+		cat results/rfb_{params.rf}/rfb/all_barcodes.fa | grep ">" | awk -F ";" '{{printf substr($1,2,length($1)-5)","; printf $2","; printf $3"\\n";}}' > {output.summary}
+		cat {input.fasta} | grep ">" -c > {output.total_seqs}
+		"""
+rule report:
+	input:
+		"results/rfb_{readfile}/barcode_summary.txt",
+		"results/rfb_{readfile}/total_seqs.txt"
+	output:
+		"results/rfb_{readfile}/report.pdf"
+	params:
+		wd = os.getcwd(),
+		rf = "{readfile}"
+	singularity:
+		"docker://reslp/rmarkdown:3.6.3"
+	shell:
+		"""
+		#cp -rf /usr/local/texlive tmp/texlive
+		#cp -rf /opt/texlive/ tmp/opt_texlive
+		cp -f {params.wd}/data/report.Rmd {params.wd}/results/rfb_{params.rf}/report.Rmd
+		cd results/rfb_{params.rf}
+		Rscript --vanilla -e "library(rmarkdown); rmarkdown::render('report.Rmd')"
+		"""

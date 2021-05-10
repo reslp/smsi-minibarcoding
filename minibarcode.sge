@@ -21,7 +21,7 @@ echo -e "\n$(date)\n"
 conda activate sm
 singularity exec docker://reslp/rmarkdown:3.6.3 cp -rf /opt/texlive/ tmp/opt_texlive
 singularity exec docker://reslp/rmarkdown:3.6.3 cp -rf /usr/local/texlive tmp/texlive
-snakemake -p --use-singularity --singularity-args "-B $(pwd)/tmp:/usertmp -B $(pwd)/tmp/texlive:/usr/local/texlive -B $(pwd)/tmp/opt_texlive:/opt/texlive" --cores 8
+snakemake -p --use-singularity --singularity-args "-B $(pwd)/tmp:/usertmp -B $(pwd)/tmp/texlive:/usr/local/texlive -B $(pwd)/tmp/opt_texlive:/opt/texlive" --cores 10
 
 
 #log data again

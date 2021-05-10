@@ -12,8 +12,12 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 count_data <- "barcode_summary.txt"
-data <- read.csv(count_data, sep=",", header=F)
+data <- read.csv(count_data, sep=",", header=F, stringsAsFactors=F)
 colnames(data) <- c("barcode", "length", "numseqs")
+
+args = commandArgs(trailingOnly=TRUE)
+nseqs <- args[1]
+nseqs <- strtoi(nseqs)
 
 ```
 
@@ -35,7 +39,7 @@ ggplot(data, aes(x=length, y=barcode)) +geom_bar(stat="identity")
 
 ```{r,fig.height=5, echo=F}
 options(scipen = 999)   
-totalseq <- 2791719
+totalseq <- nseqs 
 missing <- totalseq - sum(data$numseqs)
 
 
@@ -68,14 +72,19 @@ ggplot(propdf, aes(x=category, y=propotion_of_reads)) +geom_bar(stat="identity")
 
 ## Misssing barcodes
 
-The following barcodes have not been recovered: 
 ```{r, echo=F}
 
 all_barcodes_file <- "demfile.txt"
-dem_data <- read.csv(all_barcodes_file, sep=",", header=F)
+dem_data <- read.csv(all_barcodes_file, sep=",", header=F, stringsAsFactors=F)
 all_barcodes <- dem_data$V1
-print(data$barcode[ !data$barcode %in% all_barcodes])
+print(paste("Total number of barcodes: ", length(all_barcodes), sep=""))
+demfile <- read.csv("demfile.txt")
+print(paste("Number of recovered barcodes: ", length(data$barcode), sep=""))
+missing_barcodes <- all_barcodes[!all_barcodes %in% data$barcode]
+write.table(missing_barcodes, file="missing_barcodes.txt", quote=F, sep=",", row.names=F)
 ```
 
+**The following barcodes have not been recovered: **
 
+`r missing_barcodes`
 

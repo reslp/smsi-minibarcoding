@@ -1,0 +1,9 @@
+analysis: "Jacky_171220_guppy_basecalls" #analysis name
+
+demfile: "data/Jacky_171220_guppy_basecalls/Jacky_171220_demfile.txt" # demultiplex file
+
+fastq_files: "data/Jacky_171220_guppy_basecalls" 
+
+barcoding_settings:
+   length: 600 #estimated length of sequences
+   depth: 10000 #maximum coverage depth of single barcode

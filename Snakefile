@@ -1,68 +1,36 @@
-RF, = glob_wildcards("data/fast5_pass/{readfile}.fast5")
+configfile: "data/config.yaml"
+
+RF, = glob_wildcards("data/Jacky_171220_guppy_basecalls/{readfile}.fastq.gz")
+
 
 rule all:
 	input:
-		"results/fastq_files/flappie.done"
+		"results/fasta_combined.fasta",
 		#"results/demfile.txt",
-		#"results/reference_free_barcoding.done",
-		#"results/report.pdf"
+		"results/reference_free_barcoding.done",
+		"results/report.pdf"
 		
-
-rule flappie:
-	input:
-		dir = "data/fast5_pass"
-	output:
-		checkpoint = "results/fastq_files/flappie.done"
-	log:
-		stdout = "log/flappie.out",
-		stderr = "log/flappie.err"
-	params:
-		wd = os.getcwd(),
-		model = "r941_native"
-	singularity: "docker://reslp/flappie:4de542f"
-	threads: 10
-	shell:
-		"""
-			cd results/fastq_files/
-			export OPENBLAS_NUM_THREADS={threads}
-			for file in $(ls {params.wd}/{input.dir}); do
-				filename=$(echo $(basename $file) | awk -F'.' '{{print $1}}')	
-				if [ ! -f $filename.fastq.gz ]; then
-					echo -e "\\n$(date) - Processing file $filename"			
-					echo -e "$(date) - converting fast5"
-					if [ -d $filename ]; then rm -rf $filename/*; else mkdir $filename; fi
-                                	multi_to_single_fast5 -i {params.wd}/{input.dir}/$file -t {threads} -s $filename/
-					echo -e "$(date) - basecalling"
-					flappie --model={params.model} $filename/0 | gzip > $filename.fastq.gz.tmp
-					mv $filename.fastq.gz.tmp $filename.flappie.fastq.gz
-					rm -rf $filename
-				fi
-				echo -e "$(date) - Done"
-			done 1> {params.wd}/{log.stdout} 2> {params.wd}/{log.stderr}
-			touch {params.wd}/{output.checkpoint}
-	"""
-
-			
-
 rule create_demfile:
 	input:
-		"data/Primer_combination_MinION_Teil1.csv"
+		config["demfile"]		
 	output:
 		"results/demfile.txt"
 	shell:
 		"""
-		tail -n +2 {input} | awk -F ";" '{{printf $1","; printf substr($4,1,13)",";  printf substr($6,1,13)","; printf substr($4,14,38)","; printf substr($6,14,38)"\\n";}}' > {output}
+		#tail -n +2 {input} | awk -F ";" '{{printf $1","; printf substr($3,1,13)",";  printf substr($5,1,13)","; printf substr($3,14,38)","; printf substr($5,14,38)"\\n";}}' > {output}
+		cp {input} {output}
 		"""
 
 rule fastqtofasta:
 	input:
-		"data/fastq_pass/{readfile}.fastq.gz"
+		"data/Jacky_171220_guppy_basecalls/{readfile}.fastq.gz"
 	output:
 		fasta_file = "results/fasta_pass/{readfile}.fa"
 	shell:
 		"""
 		zcat {input} | paste - - - - | cut -f 1,2 | sed 's/^@/>/' | sed 's/\\t/\\n/'> {output}
 		"""
+
 rule combine_fasta:
 	input:
 		expand("results/fasta_pass/{rf}.fa", rf=RF) 
@@ -76,20 +44,22 @@ rule combine_fasta:
 rule reference_free_barcoding:
 	input:
 		fasta = rules.combine_fasta.output,
-		demfile = rules.create_demfile.output
+		demfile = config["demfile"]
 	output:
 		"results/reference_free_barcoding.done"
 	params:
-		len = "600",
-		depth = 10000
+		len = config["barcoding_settings"]["length"],
+		depth = config["barcoding_settings"]["depth"]
 	singularity:
 		"docker://reslp/minibarcoder:5e1dc3b"
 	shell:
 		"""
 		rm -rf results/reffreebarcoding
+		cp {input.demfile} results/
 		python /software/miniBarcoder/miniBarcoder.py -f {input.fasta} -d {input.demfile} -o results/reffreebarcoding -D {params.depth} -t 8 -l {params.len}
 		touch {output}
 		"""
+
 rule get_summary_for_plotting:
 	input:
 		checkpoint = rules.reference_free_barcoding.output,
@@ -118,5 +88,5 @@ rule report:
 		#cp -rf /opt/texlive/ tmp/opt_texlive
 		cp -f {params.wd}/data/report.Rmd {params.wd}/results/report.Rmd
 		cd results
-		Rscript --vanilla -e "library(rmarkdown); rmarkdown::render('report.Rmd')"
+		Rscript --vanilla -e "library(rmarkdown); rmarkdown::render('report.Rmd')" $(cat fasta_combined.fasta | grep ">" | wc -l)
 		"""

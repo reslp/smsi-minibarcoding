@@ -1,9 +1,11 @@
-analysis: "Jacky_171220_guppy_basecalls" #analysis name
+data_file: "data/data.csv"
 
-demfile: "data/Jacky_171220_guppy_basecalls/Jacky_171220_demfile.txt" # demultiplex file
+analysis: "Gyrodactylus_barcoding_2_guppy_min1000" #analysis name
 
-fastq_files: "data/Jacky_171220_guppy_basecalls" 
+demfile: "data/demfiles/demfile_Gyro-COI-round-1.csv" # demultiplex file
+
+fastq_files: "data/Gyrodactylus_barcoding_2_guppy_basecalls" 
 
 barcoding_settings:
-   length: 600 #estimated length of sequences
+   length: 2000 #estimated length of sequences
    depth: 10000 #maximum coverage depth of single barcode

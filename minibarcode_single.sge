@@ -1,0 +1,28 @@
+#
+#$ -N minibarcode # Job name <= adjust!!
+#$ -S /bin/bash		# Set shell to bash
+#
+#$ -l h_vmem=4G		# Request Max. Virt. Mem. <= adjust!!
+#
+#$ -cwd			# Change to current working directory
+#$ -V			# Export environment variables into script
+#$ -q mpi
+#$ -pe mpi1node 10	# Select the parallel environment <= adjust!!
+#$ -o log.$JOB_NAME.$JOB_ID.out      # SGE-Output File
+#$ -e log.$JOB_NAME.$JOB_ID.err      # SGE-Error File
+
+#print some info to log
+echo "Running under shell '${SHELL}' in directory '`pwd`' using $NSLOTS slots"
+echo "Host: $HOSTNAME"
+echo "Job: $JOB_ID"
+echo -e "\n$(date)\n"
+# this is where commands should be put:
+
+conda activate sm
+#singularity exec docker://reslp/rmarkdown:3.6.3 cp -rf /opt/texlive/ tmp/opt_texlive
+#singularity exec docker://reslp/rmarkdown:3.6.3 cp -rf /usr/local/texlive tmp/texlive
+snakemake --snakefile Snakefile -p --use-singularity --singularity-args "-B $(pwd)/tmp:/usertmp -B $(pwd)/tmp/texlive:/usr/local/texlive -B $(pwd)/tmp/opt_texlive:/opt/texlive" --cores 10
+
+
+#log data again
+echo -e "\n$(date)\n"

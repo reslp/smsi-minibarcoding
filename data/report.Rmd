@@ -3,7 +3,7 @@ title: "Barcoding Report"
 author: "smsi-minibarcoder"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
-  pdf_document:
+  html_document:
     toc: TRUE
 ---
 

@@ -53,10 +53,11 @@ rule reference_free_barcoding:
 		name = "{name}"
 	singularity:
 		"docker://reslp/minibarcoder:5e1dc3b"
+	threads: config["barcoding_setting"]["threads"]
 	shell:
 		"""
 		rm -rf results/reffreebarcoding
 		cp {input.demfile} results/{params.name}/demfile.txt
-		python /software/miniBarcoder/miniBarcoder.py -f {input.fasta} -d results/{params.name}/demfile.txt -o results/{params.name}/reffreebarcoding -D {params.depth} -t 8 -l {params.len}
+		python /software/miniBarcoder/miniBarcoder.py -f {input.fasta} -d results/{params.name}/demfile.txt -o results/{params.name}/reffreebarcoding -D {params.depth} -t {threads} -l {params.len}
 		touch {output}
 		"""

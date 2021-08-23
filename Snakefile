@@ -9,10 +9,6 @@ def get_all_reports(wildcards):
 
 rule all:
 	input:
-		#"results/fasta_combined.fasta",
-		#"results/demfile.txt",
-		#"results/reference_free_barcoding.done",
-		#"results/report.html"
 		get_all_reports
 	
 include: "rules/functions.smk"

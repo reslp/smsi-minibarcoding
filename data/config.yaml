@@ -9,3 +9,4 @@ fastq_files: "data/Gyrodactylus_barcoding_2_guppy_basecalls"
 barcoding_settings:
    length: 2000 #estimated length of sequences
    depth: 10000 #maximum coverage depth of single barcode
+   threads: 16

@@ -53,7 +53,7 @@ rule reference_free_barcoding:
 		name = "{name}"
 	singularity:
 		"docker://reslp/minibarcoder:5e1dc3b"
-	threads: config["barcoding_setting"]["threads"]
+	threads: config["barcoding_settings"]["threads"]
 	shell:
 		"""
 		rm -rf results/reffreebarcoding

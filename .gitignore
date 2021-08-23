@@ -10,3 +10,4 @@ tmp/
 !tmp/.gitkeep
 log/
 !log/.gitkeep
+results/

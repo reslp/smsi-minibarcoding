@@ -1,0 +1,22 @@
+# Configuration file for SGE (Sun Grid Engine) jobs shedulers. Make sure to set correctly according to your cluster configuration.
+__default__:
+   N: default
+   o: $(pwd)/log/sge-%j.out
+   e: $(pwd)/log/sge-%j.err
+   q: mpi # change this according to your cluster configuration
+   h_vmem: 4G # change this according to your cluster configuration. Make sure if you want to use h_vmem, mem, ... This has to be changed for all rules accordingly
+   pe: mpi1node # change this according your cluster configuration
+
+create_demfile:
+   N: crdem
+fastqtofasta:
+   N: fq2fa
+combine_fasta:
+   N: combfa
+reference_free_barcoding:
+   N: reffreebc
+   h_vmem: 4G
+get_summary_for_plotting:
+   N: getplotsum
+report:
+   N: report

@@ -6,6 +6,8 @@ demfile: "data/demfiles/demfile_Gyro-COI-round-1.csv" # demultiplex file
 
 fastq_files: "data/Gyrodactylus_barcoding_2_guppy_basecalls" 
 
+bold_taxon: "Carabidae" #this is the taxon name for which reference sequences should be downloaded from BOLD. This is for postprocessing of barcodes
+
 barcoding_settings:
    length: 2000 #estimated length of sequences
    depth: 10000 #maximum coverage depth of single barcode

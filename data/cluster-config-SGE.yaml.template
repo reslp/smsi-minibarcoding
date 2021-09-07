@@ -20,3 +20,9 @@ get_summary_for_plotting:
    N: getplotsum
 report:
    N: report
+blast_against_bold:
+   N: blast
+create_blast_database:
+   N: crblastdb
+download_bold_sequenes:
+   N: dlboldseq

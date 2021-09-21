@@ -1,8 +1,8 @@
 rule download_bold_sequences:
 	output:
-		reference_sequences = "results/{name}/postprocessing/" + config["bold_taxon"] + ".fas"
+		reference_sequences = "results/{name}/postprocessing/" + config["post_barcoding"]["bold_taxon"] + ".fas"
 	params:
-		taxon=config["bold_taxon"]
+		taxon=config["post_barcoding"]["bold_taxon"]
 	shell:
 		"""
 		wget http://v3.boldsystems.org/index.php/API_Public/sequence?taxon={params.taxon} -O {output.reference_sequences}
@@ -12,13 +12,15 @@ rule create_blast_database:
 	input:
 		reference_sequences = rules.download_bold_sequences.output.reference_sequences 
 	output:
-		db = "results/{name}/postprocessing/blastdb/{name}_db"
+		db = "results/{name}/postprocessing/blastdb/{name}_db.done"
 	params:
-		name = "{name}"
+		name = "{name}",
+		wd = os.getcwd()
 	singularity: "docker://reslp/ncbi-blast:2.9.0"
 	shell:
 		"""
-		makeblastdb -in {input.reference_sequences} -dbtype 'nucl' -hash_index -out {output.db}
+		makeblastdb -in {input.reference_sequences} -dbtype 'nucl' -hash_index -out {params.wd}/results/{params.name}/postprocessing/blastdb/{params.name}_db 
+		touch {output.db}
 		"""
 
 rule blast_against_bold:
@@ -28,11 +30,13 @@ rule blast_against_bold:
 	output:
 		"results/{name}/postprocessing/{name}_blast_results.xml"
 	params:
-		name = "{name}"
+		name = "{name}",
+		wd = os.getcwd()
+	threads: config["post_barcoding"]["blast_threads"]
 	singularity: "docker://reslp/ncbi-blast:2.9.0"
 	shell:
 		"""
-		blastn -db {input.db} -query results/{params.name}/reffreebarcoding/all_barcodes.fa -outfmt 5 > {output}
+		blastn -db {params.wd}/results/{params.name}/postprocessing/blastdb/{params.name}_db -query results/{params.name}/reffreebarcoding/all_barcodes.fa -outfmt 5 -num_threads {threads} > {output}
 		"""
 
 #rules reorient_sequences:

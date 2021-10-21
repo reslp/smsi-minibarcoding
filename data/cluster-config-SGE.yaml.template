@@ -20,9 +20,15 @@ get_summary_for_plotting:
    N: getplotsum
 report:
    N: report
-blast_against_bold:
-   N: blast
+blast_consensus_barcode_against_bold:
+   N: csblast
+blast_individual_barcode_against_bold:
+   N: isblast
 create_blast_database:
    N: crblastdb
 download_bold_sequenes:
    N: dlboldseq
+reorient_individual_barcodes:
+   N: reib
+reorient_consensus_barcodes:
+   N: recb
